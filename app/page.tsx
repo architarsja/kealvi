@@ -1,3 +1,4 @@
+import PollCard from "./components/PollCard";
 import QuestionsList from "./questions-list";
 import { getQuestionsPage } from "@/lib/questions";
 
@@ -13,6 +14,7 @@ export default async function Page() {
   return (
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="mb-4 text-2xl font-medium">Live Q&amp;A</h1>
+      <PollCard />
       <QuestionsList initialQuestions={questions} initialHasMore={hasMore} />
     </main>
   );
