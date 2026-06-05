@@ -25,7 +25,9 @@ export default function QuestionsList({
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  const [language, setLanguage] = useState<"en" | "ta" | "hi">("en");
+  const [language, setLanguage] = useState<
+    "en" | "ta" | "hi"
+  >("en");
 
   useEffect(() => {
     setHydrated(true);
@@ -38,7 +40,7 @@ export default function QuestionsList({
 
     setLanguage(saved);
 
-    const handleStorage = () => {
+    const handleLanguageChange = () => {
       const lang =
         (localStorage.getItem("language") as
           | "en"
@@ -48,31 +50,36 @@ export default function QuestionsList({
       setLanguage(lang);
     };
 
-    window.addEventListener("storage", handleStorage);
+    window.addEventListener(
+      "languageChange",
+      handleLanguageChange
+    );
 
     return () =>
       window.removeEventListener(
-        "storage",
-        handleStorage
+        "languageChange",
+        handleLanguageChange
       );
   }, []);
 
   const t = translations[language];
 
   useEffect(() => {
-    const id = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const url = query
-        ? `/api/questions?q=${encodeURIComponent(query)}`
-        : `/api/questions`;
+        ? `/api/questions?q=${encodeURIComponent(
+            query
+          )}`
+        : "/api/questions";
 
       const res = await fetch(url);
       const data = await res.json();
 
-      setQuestions(data.questions);
-      setHasMore(data.hasMore);
+      setQuestions(data.questions || []);
+      setHasMore(data.hasMore || false);
     }, 300);
 
-    return () => clearTimeout(id);
+    return () => clearTimeout(timer);
   }, [query]);
 
   async function submit() {
@@ -153,10 +160,10 @@ export default function QuestionsList({
 
     setQuestions((qs) => [
       ...qs,
-      ...data.questions,
+      ...(data.questions || []),
     ]);
 
-    setHasMore(data.hasMore);
+    setHasMore(data.hasMore || false);
 
     setLoading(false);
   }

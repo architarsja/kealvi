@@ -1,15 +1,38 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function LanguageSwitcher() {
-  const router = useRouter();
+  const [language, setLanguage] = useState("en");
+
+  useEffect(() => {
+    const saved =
+      localStorage.getItem("language") || "en";
+
+    setLanguage(saved);
+  }, []);
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) {
+    const lang = e.target.value;
+
+    setLanguage(lang);
+
+    localStorage.setItem(
+      "language",
+      lang
+    );
+
+    window.dispatchEvent(
+      new Event("languageChange")
+    );
+  }
 
   return (
     <select
-      onChange={(e) =>
-        router.push(`/${e.target.value}`)
-      }
+      value={language}
+      onChange={handleChange}
       className="border p-2 rounded"
     >
       <option value="en">
@@ -17,11 +40,11 @@ export default function LanguageSwitcher() {
       </option>
 
       <option value="ta">
-        Tamil
+        தமிழ்
       </option>
 
       <option value="hi">
-        Hindi
+        हिन्दी
       </option>
     </select>
   );
