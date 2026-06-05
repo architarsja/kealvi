@@ -7,6 +7,8 @@ import { translations } from "@/lib/translations";
 type Question = {
   id: string;
   body: string;
+  body_ta?: string;
+  body_hi?: string;
   author: string | null;
   votes?: number;
 };
@@ -223,7 +225,13 @@ export default function QuestionsList({
               ▲ {q.votes ?? 0}
             </button>
 
-            <span>{q.body}</span>
+            <span>
+              {language === "ta"
+                ? (q.body_ta || q.body)
+                : language === "hi"
+                ? (q.body_hi || q.body)
+                : q.body}
+            </span>
           </li>
         ))}
       </ul>

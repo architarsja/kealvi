@@ -100,3 +100,6 @@ create table poll_votes (
 
 create index poll_votes_poll_id_idx on poll_votes(poll_id);
 create index poll_votes_option_id_idx on poll_votes(poll_option_id);
+ALTER TABLE questions
+ADD COLUMN body_ta TEXT,
+ADD COLUMN body_hi TEXT;
