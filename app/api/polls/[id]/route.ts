@@ -1,5 +1,24 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+export async function GET() {
+  const { createClient } = await import("@supabase/supabase-js");
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Example usage (replace with your logic)
+  const { data, error } = await supabase
+    .from("polls")
+    .select("*");
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json({ data });
+}
 
 export async function POST(
   req: Request,
