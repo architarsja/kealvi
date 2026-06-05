@@ -125,8 +125,7 @@ export default function QuestionsList({
       {
         method: "POST",
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           voterId: getVoterId(),
@@ -134,14 +133,20 @@ export default function QuestionsList({
       }
     );
 
+    if (res.status === 409) {
+      alert(
+        "You have already voted for this question."
+      );
+      return;
+    }
+
     if (!res.ok) {
       setQuestions((qs) =>
         qs.map((q) =>
           q.id === id
             ? {
                 ...q,
-                votes:
-                  (q.votes ?? 0) - 1,
+                votes: (q.votes ?? 0) - 1,
               }
             : q
         )

@@ -6,28 +6,34 @@ export async function getQuestions(
 ) {
   const { data: questions, error } = await supabase
     .from("questions")
-    .select(`
-      *,
-      votes(count)
-    `)
-    .order("created_at", {
-      ascending: false,
-    })
+    .select("*")
+    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {
     throw error;
   }
 
-  const formatted =
-    questions?.map((q: any) => ({
-      ...q,
-      votes: q.votes?.[0]?.count ?? 0,
-    })) ?? [];
+  const questionsWithVotes = await Promise.all(
+    (questions || []).map(async (question) => {
+      const { count } = await supabase
+        .from("votes")
+        .select("*", {
+          count: "exact",
+          head: true,
+        })
+        .eq("question_id", question.id);
+
+      return {
+        ...question,
+        votes: count || 0,
+      };
+    })
+  );
 
   return {
-    questions: formatted,
-    hasMore: formatted.length === limit,
+    questions: questionsWithVotes,
+    hasMore: questionsWithVotes.length === limit,
   };
 }
 
@@ -37,24 +43,31 @@ export async function searchQuestions(
 ) {
   const { data: questions, error } = await supabase
     .from("questions")
-    .select(`
-      *,
-      votes(count)
-    `)
+    .select("*")
     .ilike("body", `%${query}%`)
-    .order("created_at", {
-      ascending: false,
-    })
+    .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) {
     throw error;
   }
 
-  return (
-    questions?.map((q: any) => ({
-      ...q,
-      votes: q.votes?.[0]?.count ?? 0,
-    })) ?? []
+  const questionsWithVotes = await Promise.all(
+    (questions || []).map(async (question) => {
+      const { count } = await supabase
+        .from("votes")
+        .select("*", {
+          count: "exact",
+          head: true,
+        })
+        .eq("question_id", question.id);
+
+      return {
+        ...question,
+        votes: count || 0,
+      };
+    })
   );
+
+  return questionsWithVotes;
 }
