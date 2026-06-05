@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getQuestions, searchQuestions } from "@/lib/questions";
+import { NextRequest, NextResponse } from "next/server";
 
 const PAGE_SIZE = 10;
 
