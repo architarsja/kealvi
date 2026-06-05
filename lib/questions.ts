@@ -1,25 +1,39 @@
 import { supabase } from "./supabase";
 
 export async function getQuestions(
-  sort = "latest"
+  offset = 0,
+  limit = 10
 ) {
-  let query = supabase
+  const { data, error } = await supabase
     .from("questions")
-    .select("*");
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
-  if (sort === "votes") {
-    query = query.order(
-      "votes",
-      { ascending: false }
-    );
-  } else {
-    query = query.order(
-      "created_at",
-      { ascending: false }
-    );
+  if (error) {
+    throw error;
   }
 
-  const { data } = await query;
+  return {
+    questions: data ?? [],
+    hasMore: (data?.length ?? 0) === limit,
+  };
+}
 
-  return data;
+export async function searchQuestions(
+  query: string,
+  limit = 10
+) {
+  const { data, error } = await supabase
+    .from("questions")
+    .select("*")
+    .ilike("body", `%${query}%`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
 }

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { getQuestionsPage, searchQuestions } from "@/lib/questions";
+import { getQuestions, searchQuestions } from "@/lib/questions";
 
 const PAGE_SIZE = 10;
 
@@ -9,12 +9,22 @@ export async function GET(req: Request) {
 
   if (q) {
     const questions = await searchQuestions(q, PAGE_SIZE);
-    return Response.json({ questions, hasMore: false });
+
+    return Response.json({
+      questions,
+      hasMore: false,
+    });
   }
 
   const offset = Number(searchParams.get("offset") ?? 0);
-  const { questions, hasMore } = await getQuestionsPage(offset, PAGE_SIZE);
-  return Response.json({ questions, hasMore });
+
+  const { questions, hasMore } =
+    await getQuestions(offset, PAGE_SIZE);
+
+  return Response.json({
+    questions,
+    hasMore,
+  });
 }
 
 export async function POST(req: Request) {
@@ -26,6 +36,12 @@ export async function POST(req: Request) {
     .select()
     .single();
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error) {
+    return Response.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+
   return Response.json(data);
 }
