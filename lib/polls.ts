@@ -1,15 +1,16 @@
 import { supabase } from "./supabase";
 
 export async function getPolls() {
-  const { data, error } = await supabase
-    .from("polls")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
+  const { data } = await supabase
+    .from("questions")
+    .select(`
+      *,
+      poll_options(*)
+    `);
 
   return data;
 }
+
 
 export async function getPollOptions(pollId: string) {
   const { data, error } = await supabase

@@ -10,11 +10,11 @@ type Question = {
 };
 
 export default function QuestionsList({
-  initialQuestions,
-  initialHasMore,
+  initialQuestions = [],
+  initialHasMore = false,
 }: {
-  initialQuestions: Question[];
-  initialHasMore: boolean;
+  initialQuestions?: Question[];
+  initialHasMore?: boolean;
 }) {
   const [questions, setQuestions] = useState(initialQuestions);
   const [draft, setDraft] = useState("");

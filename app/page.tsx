@@ -1,21 +1,16 @@
-import PollCard from "./components/PollCard";
+import LanguageSwitcher from "./components/LanguageSwitcher";
+import SortFilter from "./components/SortFilter";
 import QuestionsList from "./questions-list";
-import { getQuestionsPage } from "@/lib/questions";
 
-// Render on every request (don't cache/prerender) so new questions show up.
-export const dynamic = "force-dynamic";
-
-const PAGE_SIZE = 10;
-
-// Server component — runs only on the server, awaits the data, renders to HTML.
-export default async function Page() {
-  const { questions, hasMore } = await getQuestionsPage(0, PAGE_SIZE);
-
+export default function Home() {
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl font-medium">Live Q&amp;A</h1>
-      <PollCard />
-      <QuestionsList initialQuestions={questions} initialHasMore={hasMore} />
+    <main className="max-w-4xl mx-auto p-5">
+      <div className="flex justify-between mb-4">
+        <LanguageSwitcher />
+        <SortFilter />
+      </div>
+
+      <QuestionsList />
     </main>
   );
 }

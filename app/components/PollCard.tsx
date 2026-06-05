@@ -2,57 +2,64 @@
 
 import { useState } from "react";
 
-export default function PollCard() {
+export default function PollCard({
+  question,
+  options,
+}: any) {
   const [selected, setSelected] = useState("");
 
-  const options = [
-    "React",
-    "Next.js",
-    "Supabase",
-    "TypeScript",
-  ];
+  async function vote(optionId: string) {
+    setSelected(optionId);
 
-  const vote = () => {
-    if (!selected){
-    alert("Please select an option");
-      return;
-    }
+    await fetch(`/api/polls/${question.id}`, {
+      method: "POST",
+      body: JSON.stringify({
+        optionId,
+      }),
+    });
+  }
 
-    alert(`You voted for ${selected}`);
-  };
+  const totalVotes = options.reduce(
+    (sum: number, op: any) => sum + op.votes,
+    0
+  );
 
   return (
-    <div className="border rounded-lg p-4 mb-6">
-      <h2 className="text-xl font-bold mb-3">
-        Live Poll
+    <div className="border rounded p-4 shadow">
+      <h2 className="font-bold text-lg mb-4">
+        {question.title}
       </h2>
 
-      <p className="mb-3">
-        Which technology should we discuss next?
+      {options.map((option: any) => {
+        const percent =
+          totalVotes === 0
+            ? 0
+            : Math.round(
+                (option.votes / totalVotes) * 100
+              );
+
+        return (
+          <button
+            key={option.id}
+            onClick={() => vote(option.id)}
+            className={`w-full p-2 border rounded mb-2 ${
+              selected === option.id
+                ? "bg-blue-500 text-white"
+                : ""
+            }`}
+          >
+            {option.option_text}
+
+            <div>
+              {option.votes} votes ({percent}%)
+            </div>
+          </button>
+        );
+      })}
+
+      <p className="mt-3">
+        Total Votes: {totalVotes}
       </p>
-
-      {options.map((option) => (
-        <div key={option} className="mb-2">
-          <label>
-            <input
-              type="radio"
-              name="poll"
-              value={option}
-              onChange={(e) =>
-                setSelected(e.target.value)
-              }
-            />
-            <span className="ml-2">{option}</span>
-          </label>
-        </div>
-      ))}
-
-      <button
-        onClick={vote}
-        className="mt-3 border px-4 py-2 rounded"
-      >
-        Vote
-      </button>
     </div>
   );
 }
