@@ -1,41 +1,57 @@
--- Day 5 schema — run this once in the Supabase SQL Editor.
--- It resets to a clean slate (drops the previous experiment), creates the
--- tables in the shape the guide uses (votes as ROWS, not a column), adds the
--- indexes, and seeds 25 questions so pagination and search have volume.
+-- Day 5 schema
 
 -- ── reset ──────────────────────────────────────────────────────────────────
+drop table if exists poll_votes;
+drop table if exists poll_options;
+drop table if exists polls;
 drop table if exists votes;
 drop table if exists questions cascade;
 drop function if exists increment_question_votes(uuid);
 
 -- ── questions (Feature 1) ────────────────────────────────────────────────────
+
 create table questions (
   id          uuid primary key default gen_random_uuid(),
   body        text not null,
+  body_ta     text,
+  body_hi     text,
   author      text,
   created_at  timestamptz default now()
 );
 
 -- ── votes (Feature 3) ────────────────────────────────────────────────────────
--- one row per vote; the FK guarantees a vote points at a real question, and
--- the unique constraint enforces one vote per voter per question.
+
 create table votes (
   id           uuid primary key default gen_random_uuid(),
   question_id  uuid not null references questions(id) on delete cascade,
   voter_id     text not null,
   created_at   timestamptz default now(),
+
   unique (question_id, voter_id)
 );
 
 create index votes_question_id_idx on votes (question_id);
 
 -- ── full-text search index (Feature 5) ───────────────────────────────────────
--- GIN = Generalized INverted index: the word → documents map behind search.
-create index questions_fts_idx on questions using gin (to_tsvector('english', body));
 
--- ── seed (~25 questions, spaced out in time so ordering is stable) ───────────
-insert into questions (body, author, created_at)
-select body, author, now() - (n || ' minutes')::interval
+create index questions_fts_idx
+on questions using gin (to_tsvector('english', body));
+
+-- ── seed data ────────────────────────────────────────────────────────────────
+
+insert into questions (
+  body,
+  body_ta,
+  body_hi,
+  author,
+  created_at
+)
+select
+  body,
+  body,
+  body,
+  author,
+  now() - (n || ' minutes')::interval
 from (
   values
     (1,  'How do I deploy to Vercel?', 'Priya'),
@@ -65,7 +81,7 @@ from (
     (25, 'What''s the best way to add auth later?', 'Priya')
 ) as seed(n, body, author);
 
--- ── polls (new feature) ───────────────────────────────────────────────────
+-- ── polls ───────────────────────────────────────────────────────────────────
 
 create table polls (
   id          uuid primary key default gen_random_uuid(),
@@ -74,7 +90,7 @@ create table polls (
   created_at  timestamptz default now()
 );
 
--- ── poll options ──────────────────────────────────────────────────────────
+-- ── poll options ────────────────────────────────────────────────────────────
 
 create table poll_options (
   id          uuid primary key default gen_random_uuid(),
@@ -83,10 +99,10 @@ create table poll_options (
   created_at  timestamptz default now()
 );
 
-create index poll_options_poll_id_idx on poll_options(poll_id);
+create index poll_options_poll_id_idx
+on poll_options(poll_id);
 
--- ── poll votes ────────────────────────────────────────────────────────────
--- one vote per user per poll
+-- ── poll votes ──────────────────────────────────────────────────────────────
 
 create table poll_votes (
   id              uuid primary key default gen_random_uuid(),
@@ -98,8 +114,8 @@ create table poll_votes (
   unique (poll_id, voter_id)
 );
 
-create index poll_votes_poll_id_idx on poll_votes(poll_id);
-create index poll_votes_option_id_idx on poll_votes(poll_option_id);
-ALTER TABLE questions
-ADD COLUMN body_ta TEXT,
-ADD COLUMN body_hi TEXT;
+create index poll_votes_poll_id_idx
+on poll_votes(poll_id);
+
+create index poll_votes_option_id_idx
+on poll_votes(poll_option_id);
