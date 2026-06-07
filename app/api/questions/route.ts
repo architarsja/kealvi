@@ -61,7 +61,6 @@ const hindi = hiData[0].map((t: any) => t[0]).join("");
 const { data, error } = await supabase
   .from("questions")
   .insert({
-    body: english,
     body_en: english,
     body_ta: tamil,
     body_hi: hindi,

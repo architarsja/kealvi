@@ -210,32 +210,29 @@ export default function QuestionsList({
         placeholder={t.search}
         className="w-full rounded-md border px-3 py-2"
       />
+<ul className="space-y-3">
+  {questions.map((q) => (
+    <li
+      key={q.id}
+      className="flex items-center gap-3 rounded-lg border p-3"
+    >
+      <button
+        onClick={() => upvote(q.id)}
+        className="rounded-md border px-3 py-1 font-mono"
+      >
+        ▲ {q.votes ?? 0}
+      </button>
 
-      <ul className="space-y-3">
-        {questions.map((q) => (
-          <li
-            key={q.id}
-            className="flex items-center gap-3 rounded-lg border p-3"
-          >
-            <button
-              onClick={() =>
-                upvote(q.id)
-              }
-              className="rounded-md border px-3 py-1 font-mono"
-            >
-              ▲ {q.votes ?? 0}
-            </button>
-
-            <span>
-              {language === "ta"
-                ? q.body_ta
-                : language === "hi"
-                ? q.body_hi
-                : q.body_en}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <span>
+        {language === "ta"
+          ? (q.body_ta || q.body)
+          : language === "hi"
+          ? (q.body_hi || q.body)
+          : (q.body_en || q.body)}
+      </span>
+    </li>
+  ))}
+</ul>
 
       {hasMore && (
         <button
