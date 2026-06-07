@@ -7,6 +7,7 @@ import { translations } from "@/lib/translations";
 type Question = {
   id: string;
   body: string;
+  body_en?: string;
   body_ta?: string;
   body_hi?: string;
   author: string | null;
@@ -227,10 +228,10 @@ export default function QuestionsList({
 
             <span>
               {language === "ta"
-                ? (q.body_ta || q.body)
+                ? q.body_ta
                 : language === "hi"
-                ? (q.body_hi || q.body)
-                : q.body}
+                ? q.body_hi
+                : q.body_en}
             </span>
           </li>
         ))}

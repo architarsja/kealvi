@@ -31,37 +31,44 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { body, author } = await req.json();
 
-  const res = await fetch(
+  // Translate to English
+const resEn = await fetch(
+  "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" +
+    encodeURIComponent(body)
+);
+
+const enData = await resEn.json();
+const english = enData[0].map((t: any) => t[0]).join("");
+
+// Translate to Tamil
+const resTa = await fetch(
   "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ta&dt=t&q=" +
     encodeURIComponent(body)
 );
 
-  const taData = await res.json();
-  const tamil = taData[0].map((t: any) => t[0]).join("");
+const taData = await resTa.json();
+const tamil = taData[0].map((t: any) => t[0]).join("");
 
-  const res2 = await fetch(
+// Translate to Hindi
+const resHi = await fetch(
   "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q=" +
     encodeURIComponent(body)
 );
 
-  const hiData = await res2.json();
-  const hindi = hiData[0].map((t: any) => t[0]).join("");
+const hiData = await resHi.json();
+const hindi = hiData[0].map((t: any) => t[0]).join("");
 
-  // ADD THESE LINES HERE
-  console.log("English:", body);
-  console.log("Tamil:", tamil);
-  console.log("Hindi:", hindi);
-
-  const { data, error } = await supabase
-    .from("questions")
-    .insert({
-      body,
-      body_ta: tamil,
-      body_hi: hindi,
-      author,
-    })
-    .select()
-    .single();
+const { data, error } = await supabase
+  .from("questions")
+  .insert({
+    body: english,
+    body_en: english,
+    body_ta: tamil,
+    body_hi: hindi,
+    author,
+  })
+  .select()
+  .single();
 
   if (error) {
     console.log("Supabase Error:", error);
