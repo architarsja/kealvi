@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getVoterId } from "@/lib/voter";
 import { translations } from "@/lib/translations";
 
@@ -12,6 +12,7 @@ type Question = {
   body_hi?: string;
   author: string | null;
   votes?: number;
+  createdAt?: string; // important for latest sorting
 };
 
 export default function QuestionsList({
@@ -28,45 +29,27 @@ export default function QuestionsList({
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  const [language, setLanguage] = useState<
-    "en" | "ta" | "hi"
-  >("en");
-
-  const [sortBy, setSortBy] = useState<
-    "latest" | "mostVoted"
-  >("latest");
+  const [language, setLanguage] = useState<"en" | "ta" | "hi">("en");
+  const [sortBy, setSortBy] = useState<"latest" | "mostVoted">("latest");
 
   useEffect(() => {
     setHydrated(true);
 
     const saved =
-      (localStorage.getItem("language") as
-        | "en"
-        | "ta"
-        | "hi") || "en";
+      (localStorage.getItem("language") as "en" | "ta" | "hi") || "en";
 
     setLanguage(saved);
 
     const handleLanguageChange = () => {
       const lang =
-        (localStorage.getItem("language") as
-          | "en"
-          | "ta"
-          | "hi") || "en";
-
+        (localStorage.getItem("language") as "en" | "ta" | "hi") || "en";
       setLanguage(lang);
     };
 
-    window.addEventListener(
-      "languageChange",
-      handleLanguageChange
-    );
+    window.addEventListener("languageChange", handleLanguageChange);
 
     return () =>
-      window.removeEventListener(
-        "languageChange",
-        handleLanguageChange
-      );
+      window.removeEventListener("languageChange", handleLanguageChange);
   }, []);
 
   const t = translations[language];
@@ -74,9 +57,7 @@ export default function QuestionsList({
   useEffect(() => {
     const timer = setTimeout(async () => {
       const url = query
-        ? `/api/questions?q=${encodeURIComponent(
-            query
-          )}`
+        ? `/api/questions?q=${encodeURIComponent(query)}`
         : "/api/questions";
 
       const res = await fetch(url);
@@ -94,21 +75,14 @@ export default function QuestionsList({
 
     const res = await fetch("/api/questions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        body: draft,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: draft }),
     });
 
     const created = await res.json();
 
     setQuestions((qs) => [
-      {
-        ...created,
-        votes: 0,
-      },
+      { ...created, votes: 0 },
       ...qs,
     ]);
 
@@ -119,31 +93,21 @@ export default function QuestionsList({
     setQuestions((qs) =>
       qs.map((q) =>
         q.id === id
-          ? {
-              ...q,
-              votes: (q.votes ?? 0) + 1,
-            }
+          ? { ...q, votes: (q.votes ?? 0) + 1 }
           : q
       )
     );
 
-    const res = await fetch(
-      `/api/questions/${id}/vote`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          voterId: getVoterId(),
-        }),
-      }
-    );
+    const res = await fetch(`/api/questions/${id}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        voterId: getVoterId(),
+      }),
+    });
 
     if (res.status === 409) {
-      alert(
-        "You have already voted for this question."
-      );
+      alert("You have already voted for this question.");
       return;
     }
 
@@ -151,10 +115,7 @@ export default function QuestionsList({
       setQuestions((qs) =>
         qs.map((q) =>
           q.id === id
-            ? {
-                ...q,
-                votes: (q.votes ?? 0) - 1,
-              }
+            ? { ...q, votes: (q.votes ?? 0) - 1 }
             : q
         )
       );
@@ -170,37 +131,41 @@ export default function QuestionsList({
 
     const data = await res.json();
 
-    setQuestions((qs) => [
-      ...qs,
-      ...(data.questions || []),
-    ]);
-
+    setQuestions((qs) => [...qs, ...(data.questions || [])]);
     setHasMore(data.hasMore || false);
 
     setLoading(false);
   }
 
-  const displayedQuestions =
-    sortBy === "mostVoted"
-      ? [...questions].sort(
-          (a, b) => (b.votes ?? 0) - (a.votes ?? 0)
-        )
-      : questions;
+  // ✅ IMPORTANT: stable sorting (memoized)
+  const displayedQuestions = useMemo(() => {
+    const list = [...questions];
+
+    if (sortBy === "mostVoted") {
+      return list.sort(
+        (a, b) => (b.votes ?? 0) - (a.votes ?? 0)
+      );
+    }
+
+    // latest
+    return list.sort((a, b) => {
+      const aTime = new Date(a.createdAt ?? 0).getTime();
+      const bTime = new Date(b.createdAt ?? 0).getTime();
+      return bTime - aTime;
+    });
+  }, [questions, sortBy]);
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        {hydrated
-          ? t.interactive
-          : "Loading..."}
+        {hydrated ? t.interactive : "Loading..."}
       </p>
 
+      {/* Ask question */}
       <div className="flex gap-2">
         <input
           value={draft}
-          onChange={(e) =>
-            setDraft(e.target.value)
-          }
+          onChange={(e) => setDraft(e.target.value)}
           placeholder={t.askQuestion}
           className="flex-1 rounded-md border px-3 py-2"
         />
@@ -213,43 +178,36 @@ export default function QuestionsList({
         </button>
       </div>
 
+      {/* search */}
       <input
         value={query}
-        onChange={(e) =>
-          setQuery(e.target.value)
-        }
+        onChange={(e) => setQuery(e.target.value)}
         placeholder={t.search}
         className="w-full rounded-md border px-3 py-2"
       />
 
+      {/* sort buttons (you already had this — no change needed) */}
       <div className="flex gap-2">
         <button
-          onClick={() =>
-            setSortBy("latest")
-          }
+          onClick={() => setSortBy("latest")}
           className={`rounded-md border px-3 py-1 ${
-            sortBy === "latest"
-              ? "bg-black text-white"
-              : ""
+            sortBy === "latest" ? "bg-black text-white" : ""
           }`}
         >
           Latest
         </button>
 
         <button
-          onClick={() =>
-            setSortBy("mostVoted")
-          }
+          onClick={() => setSortBy("mostVoted")}
           className={`rounded-md border px-3 py-1 ${
-            sortBy === "mostVoted"
-              ? "bg-black text-white"
-              : ""
+            sortBy === "mostVoted" ? "bg-black text-white" : ""
           }`}
         >
           Most Voted
         </button>
       </div>
 
+      {/* list */}
       <ul className="space-y-3">
         {displayedQuestions.map((q) => (
           <li
@@ -257,9 +215,7 @@ export default function QuestionsList({
             className="flex items-center gap-3 rounded-lg border p-3"
           >
             <button
-              onClick={() =>
-                upvote(q.id)
-              }
+              onClick={() => upvote(q.id)}
               className="rounded-md border px-3 py-1 font-mono"
             >
               ▲ {q.votes ?? 0}
@@ -267,29 +223,23 @@ export default function QuestionsList({
 
             <span>
               {language === "ta"
-                ? (q.body_ta ||
-                    q.body_en ||
-                    q.body)
+                ? q.body_ta || q.body_en || q.body
                 : language === "hi"
-                ? (q.body_hi ||
-                    q.body_en ||
-                    q.body)
-                : (q.body_en ||
-                    q.body)}
+                ? q.body_hi || q.body_en || q.body
+                : q.body_en || q.body}
             </span>
           </li>
         ))}
       </ul>
 
+      {/* load more */}
       {hasMore && (
         <button
           onClick={loadMore}
           disabled={loading}
           className="rounded-md border px-4 py-2 disabled:opacity-50"
         >
-          {loading
-            ? t.loading
-            : t.loadMore}
+          {loading ? t.loading : t.loadMore}
         </button>
       )}
     </div>
