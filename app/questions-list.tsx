@@ -176,6 +176,9 @@ export default function QuestionsList({
     setLoading(false);
   }
   console.log("Current Language:", language);
+  const sortedQuestions = [...questions].sort(
+  (a, b) => (b.votes ?? 0) - (a.votes ?? 0)
+);
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
@@ -211,7 +214,7 @@ export default function QuestionsList({
         className="w-full rounded-md border px-3 py-2"
       />
 <ul className="space-y-3">
-  {questions.map((q) => (
+  {sortedQuestions.map((q) => (
     <li
       key={q.id}
       className="flex items-center gap-3 rounded-lg border p-3"
