@@ -174,7 +174,7 @@ export default function QuestionsList({
 
     setLoading(false);
   }
-
+  console.log("Current Language:", language);
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">

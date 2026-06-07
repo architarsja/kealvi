@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function PollCard({
   question,
   options,
+  language,
 }: any) {
   const [selected, setSelected] = useState("");
 
@@ -27,7 +28,11 @@ export default function PollCard({
   return (
     <div className="border rounded p-4 shadow">
       <h2 className="font-bold text-lg mb-4">
-        {question.title}
+        {language === "ta"
+          ? question.title_ta || question.title
+          : language === "hi"
+          ? question.title_hi || question.title
+          : question.title}
       </h2>
 
       {options.map((option: any) => {
