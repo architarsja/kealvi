@@ -42,7 +42,7 @@ export default function PollCard({
             : Math.round(
                 (option.votes / totalVotes) * 100
               );
-
+              
         return (
           <button
             key={option.id}
