@@ -32,6 +32,10 @@ export default function QuestionsList({
     "en" | "ta" | "hi"
   >("en");
 
+  const [sortBy, setSortBy] = useState<
+    "latest" | "mostVoted"
+  >("latest");
+
   useEffect(() => {
     setHydrated(true);
 
@@ -175,10 +179,14 @@ export default function QuestionsList({
 
     setLoading(false);
   }
-  console.log("Current Language:", language);
-  const sortedQuestions = [...questions].sort(
-  (a, b) => (b.votes ?? 0) - (a.votes ?? 0)
-);
+
+  const displayedQuestions =
+    sortBy === "mostVoted"
+      ? [...questions].sort(
+          (a, b) => (b.votes ?? 0) - (a.votes ?? 0)
+        )
+      : questions;
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
@@ -213,29 +221,65 @@ export default function QuestionsList({
         placeholder={t.search}
         className="w-full rounded-md border px-3 py-2"
       />
-<ul className="space-y-3">
-  {sortedQuestions.map((q) => (
-    <li
-      key={q.id}
-      className="flex items-center gap-3 rounded-lg border p-3"
-    >
-      <button
-        onClick={() => upvote(q.id)}
-        className="rounded-md border px-3 py-1 font-mono"
-      >
-        ▲ {q.votes ?? 0}
-      </button>
 
-      <span>
-        {language === "ta"
-          ? (q.body_ta || q.body)
-          : language === "hi"
-          ? (q.body_hi || q.body)
-          : (q.body_en || q.body)}
-      </span>
-    </li>
-  ))}
-</ul>
+      <div className="flex gap-2">
+        <button
+          onClick={() =>
+            setSortBy("latest")
+          }
+          className={`rounded-md border px-3 py-1 ${
+            sortBy === "latest"
+              ? "bg-black text-white"
+              : ""
+          }`}
+        >
+          Latest
+        </button>
+
+        <button
+          onClick={() =>
+            setSortBy("mostVoted")
+          }
+          className={`rounded-md border px-3 py-1 ${
+            sortBy === "mostVoted"
+              ? "bg-black text-white"
+              : ""
+          }`}
+        >
+          Most Voted
+        </button>
+      </div>
+
+      <ul className="space-y-3">
+        {displayedQuestions.map((q) => (
+          <li
+            key={q.id}
+            className="flex items-center gap-3 rounded-lg border p-3"
+          >
+            <button
+              onClick={() =>
+                upvote(q.id)
+              }
+              className="rounded-md border px-3 py-1 font-mono"
+            >
+              ▲ {q.votes ?? 0}
+            </button>
+
+            <span>
+              {language === "ta"
+                ? (q.body_ta ||
+                    q.body_en ||
+                    q.body)
+                : language === "hi"
+                ? (q.body_hi ||
+                    q.body_en ||
+                    q.body)
+                : (q.body_en ||
+                    q.body)}
+            </span>
+          </li>
+        ))}
+      </ul>
 
       {hasMore && (
         <button
