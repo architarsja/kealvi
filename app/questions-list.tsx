@@ -221,13 +221,33 @@ export default function QuestionsList({
               ▲ {q.votes ?? 0}
             </button>
 
-            <span>
-              {language === "ta"
-                ? q.body_ta || q.body_en || q.body
-                : language === "hi"
-                ? q.body_hi || q.body_en || q.body
-                : q.body_en || q.body}
-            </span>
+            <div className="flex flex-1 items-center justify-between">
+  <span>
+    {language === "ta"
+      ? q.body_ta || q.body_en || q.body
+      : language === "hi"
+      ? q.body_hi || q.body_en || q.body
+      : q.body_en || q.body}
+  </span>
+
+  <button
+    onClick={async () => {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Kealvi Question",
+          text: q.body,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(q.body);
+        alert("Question copied to clipboard!");
+      }
+    }}
+    className="ml-3 rounded-md border px-2 py-1"
+  >
+    🔗
+  </button>
+</div>
           </li>
         ))}
       </ul>
