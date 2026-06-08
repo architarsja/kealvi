@@ -14,12 +14,18 @@ interface Question {
   author: string;
   votes?: number;
 }
+interface PollOption {
+  id: string;
+  option_text: string;
+  votes: number;
+}
+
 interface Poll {
   id: string;
   title: string;
-  question_id: string; // ✅ foreign key to Question
-  question?: Question; // ✅ optional relation if you join with questions
-  poll_options?: { id: string; option_text: string; votes: number }[]; // ✅ optional relation if you join with poll_options
+  question_id: string;
+  question?: Question;
+  poll_options?: PollOption[];
 }
 export default function QuestionsList({
   initialQuestions = [],
@@ -314,16 +320,12 @@ async function createPoll() {
         <p>{poll.question?.body}</p>
 
         <div className="mt-2 space-y-2">
-          {poll.poll_options?.map(
-            (option: any) => (
-              <div
-                key={option.id}
-                className="rounded border p-2"
-              >
-                {option.option_text}
-              </div>
-            )
-          )}
+          {poll.poll_options?.map((option: PollOption) => (
+  <div key={option.id} className="rounded border p-2">
+    {option.option_text} ({option.votes} votes)
+  </div>
+))}
+
         </div>
       </div>
     ))}
