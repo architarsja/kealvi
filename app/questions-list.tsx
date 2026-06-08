@@ -13,6 +13,7 @@ type Question = {
   author: string | null;
   votes?: number;
 };
+const [hydrated, setHydrated] = useState(true);
 
 export default function QuestionsList({
   initialQuestions = [],
