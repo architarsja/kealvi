@@ -14,18 +14,12 @@ interface Question {
   author: string;
   votes?: number;
 }
-interface PollOption {
-  id: string;
-  option_text: string;
-  votes: number;
-}
-
 interface Poll {
   id: string;
   title: string;
-  question_id: string;
-  question?: Question; // ✅ relation
-  poll_options?: PollOption[]; // ✅ relation
+  question_id: string; // ✅ foreign key to Question
+  question?: Question; // ✅ optional relation if you join with questions
+  poll_options?: { id: string; option_text: string; votes: number }[]; // ✅ optional relation if you join with poll_options
 }
 export default function QuestionsList({
   initialQuestions = [],
@@ -59,8 +53,6 @@ const [option2, setOption2] = useState("");
   "questions" | "polls"
 >("questions");
   useEffect(() => {
-    setHydrated(true);
-
     const saved =
       (localStorage.getItem("language") as
         | "en"
