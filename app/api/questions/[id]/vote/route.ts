@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// Use service role key for inserts (server-side only)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // use service role for inserts
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const { voterId } = await req.json();
   const questionId = params.id; // ✅ comes from URL
 
@@ -18,7 +22,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     .from("polls")
     .insert([
       {
-        question_id: questionId,   // ✅ required column
+        question_id: questionId, // ✅ required column
         voter_id: voterId,
       },
     ]);
