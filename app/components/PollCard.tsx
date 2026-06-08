@@ -1,70 +1,71 @@
-"use client";
+'use client';
+import { Poll, submitPollVote, closePollById } from '@/lib/polls';
+import { getFingerprint } from '@/lib/voter';
+import PollOption from './PollOption';
 
-import { useState } from "react";
+type Props = {
+  poll: Poll;
+  onUpdate: () => void;
+};
 
-export default function PollCard({
-  question,
-  options,
-  language,
-}: any) {
-  const [selected, setSelected] = useState("");
+export default function PollCard({ poll, onUpdate }: Props) {
+  const total = (poll.options ?? []).reduce((s, o) => s + o.votes_count, 0);
+  const maxV  = Math.max(...(poll.options ?? []).map((o) => o.votes_count), 0);
+  const hasVoted = poll.user_voted_option != null || poll.is_closed;
 
-  async function vote(optionId: string) {
-    setSelected(optionId);
-
-    await fetch(`/api/polls/${question.id}`, {
-      method: "POST",
-      body: JSON.stringify({
-        optionId,
-      }),
-    });
+  async function handleVote(optionId: string) {
+    if (hasVoted || poll.is_closed) return;
+    const fp = getFingerprint();
+    await submitPollVote(poll.id, optionId, poll.user_voted_option ?? null, fp);
+    onUpdate();
   }
 
-  const totalVotes = options.reduce(
-    (sum: number, op: any) => sum + op.votes,
-    0
-  );
+  async function handleClose() {
+    await closePollById(poll.id);
+    onUpdate();
+  }
 
   return (
-    <div className="border rounded p-4 shadow">
-      <h2 className="font-bold text-lg mb-4">
-        {language === "ta"
-          ? question.title_ta || question.title
-          : language === "hi"
-          ? question.title_hi || question.title
-          : question.title}
-      </h2>
+    <div className={`poll-card ${poll.is_closed ? 'closed' : ''}`}>
+      {/* Header */}
+      <div className="poll-header">
+        <p className="poll-title">{poll.title}</p>
+        <span className={`poll-status ${poll.is_closed ? 'closed' : 'live'}`}>
+          {poll.is_closed ? 'CLOSED' : 'LIVE'}
+        </span>
+      </div>
 
-      {options.map((option: any) => {
-        const percent =
-          totalVotes === 0
-            ? 0
-            : Math.round(
-                (option.votes / totalVotes) * 100
-              );
-              
+      {/* Options */}
+      {(poll.options ?? []).map((opt) => {
+        const pct    = total ? Math.round((opt.votes_count / total) * 100) : 0;
+        const isWin  = hasVoted && opt.votes_count === maxV && maxV > 0;
+        const isSel  = poll.user_voted_option === opt.id;
         return (
-          <button
-            key={option.id}
-            onClick={() => vote(option.id)}
-            className={`w-full p-2 border rounded mb-2 ${
-              selected === option.id
-                ? "bg-blue-500 text-white"
-                : ""
-            }`}
-          >
-            {option.option_text}
-
-            <div>
-              {option.votes} votes ({percent}%)
-            </div>
-          </button>
+          <PollOption
+            key={opt.id}
+            label={opt.label}
+            pct={pct}
+            isSelected={isSel}
+            isWinner={isWin}
+            showResult={hasVoted}
+            onClick={() => handleVote(opt.id)}
+          />
         );
       })}
 
-      <p className="mt-3">
-        Total Votes: {totalVotes}
-      </p>
+      {/* Footer */}
+      <div className="poll-footer">
+        <span className="total-votes">
+          <i className="ti ti-users" aria-hidden
+             style={{ fontSize: 13, verticalAlign: -1, marginRight: 4 }} />
+          {total} vote{total !== 1 ? 's' : ''}
+        </span>
+        {!poll.is_closed && (
+          <button className="btn-ghost" style={{ marginLeft: 'auto' }} onClick={handleClose}>
+            Close poll
+          </button>
+        )}
+      </div>
     </div>
   );
 }

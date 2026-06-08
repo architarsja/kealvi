@@ -1,26 +1,32 @@
-import { supabase } from "@/lib/supabase";
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
-// We don't check-then-insert (that has a time-of-check-to-time-of-use race).
-// We just try to insert and let the unique(question_id, voter_id) constraint
-// be the referee — it's enforced atomically as part of the insert.
 export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-  const { id: questionId } = await params;
-  const { voterId } = await req.json();
+  const { user_fingerprint } = await req.json();
+  const questionId = params.id;
 
-  const { error } = await supabase
-    .from("votes")
-    .insert({ question_id: questionId, voter_id: voterId });
-
-  if (error) {
-    if (error.code === "23505") {
-      // Postgres unique violation → this voter already voted on this question.
-      return Response.json({ error: "already voted" }, { status: 409 });
-    }
-    return Response.json({ error: error.message }, { status: 500 });
+  if (!user_fingerprint) {
+    return NextResponse.json({ error: 'Missing fingerprint' }, { status: 400 });
   }
 
-  return Response.json({ ok: true });
+  // Check existing vote
+  const { data: existing } = await supabase
+    .from('votes')
+    .select('id')
+    .eq('question_id', questionId)
+    .eq('user_fingerprint', user_fingerprint)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from('votes').delete().eq('id', existing.id);
+    return NextResponse.json({ action: 'removed' });
+  } else {
+    await supabase
+      .from('votes')
+      .insert({ question_id: questionId, user_fingerprint });
+    return NextResponse.json({ action: 'added' });
+  }
 }
