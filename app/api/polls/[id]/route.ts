@@ -3,16 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   const { data, error } = await supabase
     .from("polls")
-    .select(`
-      *,
-      poll_options (*)
-    `)
+    .select("*, poll_options(*)")
     .eq("id", id)
     .single();
 
