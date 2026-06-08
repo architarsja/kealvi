@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // Use service role key for inserts (server-side only)
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
