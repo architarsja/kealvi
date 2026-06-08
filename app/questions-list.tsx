@@ -109,16 +109,14 @@ async function createPoll() {
   }
 
   const res = await fetch("/api/polls", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: pollTitle,
-      question: pollQuestion,
-      options: [option1, option2],
-    }),
-  });
+  method: "POST",
+  body: JSON.stringify({
+    title: pollTitle,
+    question: questions[0].id,   // ✅ UUID, not text
+    options: [option1, option2],
+  }),
+});
+
 
   const data = await res.json();
 
