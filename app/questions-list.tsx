@@ -96,8 +96,16 @@ const [option2, setOption2] = useState("");
     return () => clearTimeout(timer);
   }, [query]);
 
-  async function createPoll() {
-  console.log("Create Poll clicked");
+async function createPoll() {
+  if (
+    !pollTitle.trim() ||
+    !pollQuestion.trim() ||
+    !option1.trim() ||
+    !option2.trim()
+  ) {
+    alert("Please fill all fields");
+    return;
+  }
 
   const res = await fetch("/api/polls", {
     method: "POST",
@@ -111,15 +119,34 @@ const [option2, setOption2] = useState("");
     }),
   });
 
-  console.log("Status:", res.status);
-
   const data = await res.json();
-  console.log("Response:", data);
 
   if (!res.ok) {
     alert(data.error || "Failed to create poll");
     return;
   }
+
+  setPolls((prev) => [
+    {
+      ...data.poll,
+      poll_options: [
+        {
+          id: 1,
+          option_text: option1,
+        },
+        {
+          id: 2,
+          option_text: option2,
+        },
+      ],
+    },
+    ...prev,
+  ]);
+
+  setPollTitle("");
+  setPollQuestion("");
+  setOption1("");
+  setOption2("");
 
   alert("Poll created successfully");
 }
