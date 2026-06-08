@@ -28,81 +28,39 @@ export default function QuestionsList({
   initialQuestions?: Question[];
   initialHasMore?: boolean;
 }) {
-  const [questions, setQuestions] = useState(initialQuestions);
+  // ✅ All hooks at the top
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
-  const [hydrated, setHydrated] = useState(true);
   const [polls, setPolls] = useState<Poll[]>([]);
-
-const [pollTitle, setPollTitle] = useState("");
-const [pollQuestion, setPollQuestion] = useState("");
-
-const [option1, setOption1] = useState("");
-const [option2, setOption2] = useState("");
-
-  const [language, setLanguage] = useState<
-    "en" | "ta" | "hi"
-  >("en");
-
-  const [sortBy, setSortBy] = useState<
-    "latest" | "mostVoted"
-  >("latest");
-  const [view, setView] = useState<
-  "questions" | "polls"
->("questions");
-  useEffect(() => {
-    const saved =
-      (localStorage.getItem("language") as
-        | "en"
-        | "ta"
-        | "hi") || "en";
-
-    const [language, setLanguage] = useState<"en" | "ta" | "hi">(
-  (typeof window !== "undefined" &&
-    (localStorage.getItem("language") as "en" | "ta" | "hi")) || "en"
-);
-
-const [questions, setQuestions] = useState<Question[]>([]);
-
-useEffect(() => {
-  // If you want to listen for language changes:
-  const handleLanguageChange = () => {
-    const lang =
-      (localStorage.getItem("language") as "en" | "ta" | "hi") || "en";
-    setLanguage(lang);
-  };
-
-  window.addEventListener("languageChange", handleLanguageChange);
-  return () => window.removeEventListener("languageChange", handleLanguageChange);
-}, []);
-
-
-    const handleLanguageChange = () => {
-      const lang =
-        (localStorage.getItem("language") as
-          | "en"
-          | "ta"
-          | "hi") || "en";
-
-      setLanguage(lang);
-    };
-
-    window.addEventListener(
-      "languageChange",
-      handleLanguageChange
-    );
-
-    return () =>
-      window.removeEventListener(
-        "languageChange",
-        handleLanguageChange
-      );
-  }, []);
+  const [pollTitle, setPollTitle] = useState("");
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [option1, setOption1] = useState("");
+  const [option2, setOption2] = useState("");
+  const [language, setLanguage] = useState<"en" | "ta" | "hi">(
+    (typeof window !== "undefined" &&
+      (localStorage.getItem("language") as "en" | "ta" | "hi")) || "en"
+  );
+  const [sortBy, setSortBy] = useState<"latest" | "mostVoted">("latest");
+  const [view, setView] = useState<"questions" | "polls">("questions");
 
   const t = translations[language];
 
+  // ✅ Effect for language changes
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      const lang =
+        (localStorage.getItem("language") as "en" | "ta" | "hi") || "en";
+      setLanguage(lang);
+    };
+
+    window.addEventListener("languageChange", handleLanguageChange);
+    return () => window.removeEventListener("languageChange", handleLanguageChange);
+  }, []);
+
+  // ✅ Effect for fetching questions
   useEffect(() => {
     const timer = setTimeout(async () => {
       const url = query
@@ -437,12 +395,6 @@ async function createPoll() {
             हिन्दी
           </button>
         </div>
-
-        <p className="text-sm text-gray-500">
-          {hydrated
-            ? t.interactive
-            : "Loading..."}
-        </p>
 
         <div className="flex gap-2">
           <input
