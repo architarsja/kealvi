@@ -4,16 +4,16 @@ import { useState, useEffect } from "react";
 import { getVoterId } from "@/lib/voter";
 import { translations } from "@/lib/translations";
 
-type Question = {
+
+interface Question {
   id: string;
   body: string;
   body_en?: string;
   body_ta?: string;
   body_hi?: string;
-  author: string | null;
+  author: string;
   votes?: number;
-};
-const [hydrated, setHydrated] = useState(true);
+}
 
 export default function QuestionsList({
   initialQuestions = [],
@@ -27,7 +27,7 @@ export default function QuestionsList({
   const [query, setQuery] = useState("");
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(true);
   const [polls, setPolls] = useState<any[]>([]);
 
 const [pollTitle, setPollTitle] = useState("");
