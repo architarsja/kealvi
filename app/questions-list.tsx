@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-// REPLACE with
-import { getFingerprint as getVoterId } from '@/lib/voter';
+import { getVoterId } from "@/lib/voter";
 import { translations } from "@/lib/translations";
-import SortFilter from './components/SortFilter';
 
 type Question = {
   id: string;

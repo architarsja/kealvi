@@ -1,52 +1,73 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
-export type Question = {
-  id: string;
-  body: string;
-  is_pinned: boolean;
-  is_answered: boolean;
-  session_id: string;
-  created_at: string;
-  vote_count?: number;
-  user_voted?: boolean;
-};
-
-// ── Fetch all questions with vote counts ─────────────────
-export async function fetchQuestions(userFingerprint: string): Promise<Question[]> {
+export async function getQuestions(
+  offset = 0,
+  limit = 10
+) {
   const { data: questions, error } = await supabase
-    .from('questions')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .from("questions")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
-  if (error || !questions) return [];
+  if (error) {
+    throw error;
+  }
 
-  const { data: allVotes } = await supabase
-    .from('votes')
-    .select('question_id, user_fingerprint');
+  const questionsWithVotes = await Promise.all(
+    (questions || []).map(async (question) => {
+      const { count } = await supabase
+        .from("votes")
+        .select("*", {
+          count: "exact",
+          head: true,
+        })
+        .eq("question_id", question.id);
 
-  const votes = allVotes ?? [];
+      return {
+        ...question,
+        votes: count || 0,
+      };
+    })
+  );
 
-  return questions.map((q) => ({
-    ...q,
-    vote_count: votes.filter((v) => v.question_id === q.id).length,
-    user_voted: votes.some(
-      (v) => v.question_id === q.id && v.user_fingerprint === userFingerprint
-    ),
-  }));
+  return {
+    questions: questionsWithVotes,
+    hasMore: questionsWithVotes.length === limit,
+  };
 }
 
-// ── Add a question ───────────────────────────────────────
-export async function addQuestion(body: string, sessionId: string) {
-  const { error } = await supabase.from('questions').insert({
-    body,
-    session_id: sessionId,
-    is_pinned: false,
-    is_answered: false,
-  });
-  if (error) console.error('addQuestion error:', error);
-}
+export async function searchQuestions(
+  query: string,
+  limit = 10
+) {
+  const { data: questions, error } = await supabase
+    .from("questions")
+    .select("*")
+    .ilike("body", `%${query}%`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
-// ── Toggle pin ───────────────────────────────────────────
-export async function togglePinQuestion(id: string, current: boolean) {
-  await supabase.from('questions').update({ is_pinned: !current }).eq('id', id);
+  if (error) {
+    throw error;
+  }
+
+  const questionsWithVotes = await Promise.all(
+    (questions || []).map(async (question) => {
+      const { count } = await supabase
+        .from("votes")
+        .select("*", {
+          count: "exact",
+          head: true,
+        })
+        .eq("question_id", question.id);
+
+      return {
+        ...question,
+        votes: count || 0,
+      };
+    })
+  );
+
+  return questionsWithVotes;
 }
