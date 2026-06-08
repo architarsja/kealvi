@@ -12,7 +12,7 @@ export default function PollCard({ poll, onUpdate }: Props) {
   const total = (poll.options ?? []).reduce((s, o) => s + o.votes_count, 0);
   const maxV  = Math.max(...(poll.options ?? []).map((o) => o.votes_count), 0);
   const hasVoted = poll.user_voted_option != null || poll.is_closed;
-
+  
   async function handleVote(optionId: string) {
     if (hasVoted || poll.is_closed) return;
     const fp = getFingerprint();
