@@ -59,7 +59,25 @@ const [option2, setOption2] = useState("");
         | "ta"
         | "hi") || "en";
 
-    setLanguage(saved);
+    const [language, setLanguage] = useState<"en" | "ta" | "hi">(
+  (typeof window !== "undefined" &&
+    (localStorage.getItem("language") as "en" | "ta" | "hi")) || "en"
+);
+
+const [questions, setQuestions] = useState<Question[]>([]);
+
+useEffect(() => {
+  // If you want to listen for language changes:
+  const handleLanguageChange = () => {
+    const lang =
+      (localStorage.getItem("language") as "en" | "ta" | "hi") || "en";
+    setLanguage(lang);
+  };
+
+  window.addEventListener("languageChange", handleLanguageChange);
+  return () => window.removeEventListener("languageChange", handleLanguageChange);
+}, []);
+
 
     const handleLanguageChange = () => {
       const lang =
