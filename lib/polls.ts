@@ -1,5 +1,14 @@
 import { supabase } from "./supabase";
 
+export async function createPoll(questionId: string, voterId: string) {
+  return supabase.from("polls").insert([
+    {
+      question_id: questionId,
+      voter_id: voterId,
+    },
+  ]);
+}
+
 export async function getPolls() {
   const { data } = await supabase
     .from("questions")

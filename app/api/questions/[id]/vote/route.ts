@@ -1,32 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { user_fingerprint } = await req.json();
-  const questionId = params.id;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // use service role for inserts
+);
 
-  if (!user_fingerprint) {
-    return NextResponse.json({ error: 'Missing fingerprint' }, { status: 400 });
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  const { voterId } = await req.json();
+  const questionId = params.id; // ✅ comes from URL
+
+  if (!questionId) {
+    return NextResponse.json({ error: "questionId is required" }, { status: 400 });
   }
 
-  // Check existing vote
-  const { data: existing } = await supabase
-    .from('votes')
-    .select('id')
-    .eq('question_id', questionId)
-    .eq('user_fingerprint', user_fingerprint)
-    .maybeSingle();
+  const { error } = await supabase
+    .from("polls")
+    .insert([
+      {
+        question_id: questionId,   // ✅ required column
+        voter_id: voterId,
+      },
+    ]);
 
-  if (existing) {
-    await supabase.from('votes').delete().eq('id', existing.id);
-    return NextResponse.json({ action: 'removed' });
-  } else {
-    await supabase
-      .from('votes')
-      .insert({ question_id: questionId, user_fingerprint });
-    return NextResponse.json({ action: 'added' });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  return NextResponse.json({ success: true });
 }
