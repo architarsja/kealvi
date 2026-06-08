@@ -38,7 +38,7 @@ export async function POST(
     .from("polls")
     .insert([
       {
-        question_id: pollId, // or `id: pollId` depending on your schema
+        id: pollId, // or `id: pollId` depending on your schema
         voter_id: voterId,
       },
     ]);
