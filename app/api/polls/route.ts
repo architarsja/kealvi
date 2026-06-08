@@ -8,10 +8,13 @@ export async function POST(req: Request) {
   }
 
   const { data: poll, error: pollError } = await supabase
-    .from("polls")
-    .insert({ title, question })
-    .select()
-    .single();
+  .from("polls")
+  .insert({
+    title,
+    question_id: question, // ✅ use the actual question id
+  })
+  .select()
+  .single();
 
   if (pollError || !poll) {
     return Response.json(
