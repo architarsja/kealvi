@@ -14,7 +14,19 @@ interface Question {
   author: string;
   votes?: number;
 }
+interface PollOption {
+  id: string;
+  option_text: string;
+  votes: number;
+}
 
+interface Poll {
+  id: string;
+  title: string;
+  question_id: string;
+  question?: Question; // ✅ relation
+  poll_options?: PollOption[]; // ✅ relation
+}
 export default function QuestionsList({
   initialQuestions = [],
   initialHasMore = false,
@@ -28,7 +40,7 @@ export default function QuestionsList({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(true);
-  const [polls, setPolls] = useState<any[]>([]);
+  const [polls, setPolls] = useState<Poll[]>([]);
 
 const [pollTitle, setPollTitle] = useState("");
 const [pollQuestion, setPollQuestion] = useState("");
@@ -331,7 +343,7 @@ async function createPoll() {
           {poll.title}
         </h3>
 
-        <p>{poll.question}</p>
+        <p>{poll.question?.body}</p>
 
         <div className="mt-2 space-y-2">
           {poll.poll_options?.map(
