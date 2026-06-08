@@ -125,7 +125,7 @@ async function createPoll() {
     alert(data.error || "Failed to create poll");
     return;
   }
-
+  
   setPolls((prev) => [
     {
       ...data.poll,
