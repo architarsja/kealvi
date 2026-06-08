@@ -1,10 +1,11 @@
 import { supabase } from "@/lib/supabase";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: { id: string } }
 ) {
-  const { id } = params;
+  const { id } = context.params;
 
   const { data, error } = await supabase
     .from("polls")
@@ -16,11 +17,11 @@ export async function GET(
     .single();
 
   if (error) {
-    return Response.json(
+    return NextResponse.json(
       { error: error.message },
       { status: 500 }
     );
   }
 
-  return Response.json({ poll: data });
+  return NextResponse.json({ poll: data });
 }
