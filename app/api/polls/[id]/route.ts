@@ -1,61 +1,116 @@
-import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+
 export async function GET() {
-  const { createClient } = await import("@supabase/supabase-js");
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  // Example usage (replace with your logic)
   const { data, error } = await supabase
     .from("polls")
-    .select("*");
+    .select(
+      `
+      *,
+      poll_options (*)
+    `
+    )
+    .order("created_at", { ascending: false });
 
   if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-
-  return Response.json({ data });
-}
-
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const { optionId } = await req.json();
-
-  const { data, error } = await supabase
-    .from("poll_options")
-    .select("votes")
-    .eq("id", optionId)
-    .single();
-
-  if (error || !data) {
-    return NextResponse.json(
-      { error: "Option not found" },
-      { status: 404 }
-    );
-  }
-
-  const { error: updateError } = await supabase
-    .from("poll_options")
-    .update({
-      votes: (data.votes ?? 0) + 1,
-    })
-    .eq("id", optionId);
-
-  if (updateError) {
-    return NextResponse.json(
-      { error: updateError.message },
+    return Response.json(
+      { error: error.message },
       { status: 500 }
     );
   }
 
-  return NextResponse.json({
-    success: true,
-    pollId: id,
+  return Response.json({
+    polls: data || [],
   });
+}
+
+export async function POST(req: Request) {
+  try {
+    const {
+      title,
+      question,
+      options,
+    } = await req.json();
+
+    if (
+      !title ||
+      !question ||
+      !options ||
+      !Array.isArray(options) ||
+      options.length < 2
+    ) {
+      return Response.json(
+        {
+          error:
+            "Title, question and at least 2 options are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    const { data: poll, error: pollError } =
+      await supabase
+        .from("polls")
+        .insert({
+          title,
+          question,
+        })
+        .select()
+        .single();
+
+    if (pollError) {
+      console.error(
+        "Poll Error:",
+        pollError
+      );
+
+      return Response.json(
+        { error: pollError.message },
+        { status: 500 }
+      );
+    }
+
+    const optionRows = options
+      .filter(
+        (option: string) =>
+          option &&
+          option.trim() !== ""
+      )
+      .map((option: string) => ({
+        poll_id: poll.id,
+        option_text: option.trim(),
+      }));
+
+    const {
+      error: optionError,
+    } = await supabase
+      .from("poll_options")
+      .insert(optionRows);
+
+    if (optionError) {
+      console.error(
+        "Option Error:",
+        optionError
+      );
+
+      return Response.json(
+        { error: optionError.message },
+        { status: 500 }
+      );
+    }
+
+    return Response.json({
+      success: true,
+      poll,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return Response.json(
+      {
+        error:
+          "Failed to create poll",
+      },
+      { status: 500 }
+    );
+  }
 }

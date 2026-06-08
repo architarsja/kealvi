@@ -27,6 +27,13 @@ export default function QuestionsList({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [polls, setPolls] = useState<any[]>([]);
+
+const [pollTitle, setPollTitle] = useState("");
+const [pollQuestion, setPollQuestion] = useState("");
+
+const [option1, setOption1] = useState("");
+const [option2, setOption2] = useState("");
 
   const [language, setLanguage] = useState<
     "en" | "ta" | "hi"
@@ -35,7 +42,9 @@ export default function QuestionsList({
   const [sortBy, setSortBy] = useState<
     "latest" | "mostVoted"
   >("latest");
-
+  const [view, setView] = useState<
+  "questions" | "polls"
+>("questions");
   useEffect(() => {
     setHydrated(true);
 
@@ -74,9 +83,7 @@ export default function QuestionsList({
   useEffect(() => {
     const timer = setTimeout(async () => {
       const url = query
-        ? `/api/questions?q=${encodeURIComponent(
-            query
-          )}`
+        ? `/api/questions?q=${encodeURIComponent(query)}`
         : "/api/questions";
 
       const res = await fetch(url);
@@ -88,6 +95,34 @@ export default function QuestionsList({
 
     return () => clearTimeout(timer);
   }, [query]);
+
+  async function createPoll() {
+  console.log("Create Poll clicked");
+
+  const res = await fetch("/api/polls", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: pollTitle,
+      question: pollQuestion,
+      options: [option1, option2],
+    }),
+  });
+
+  console.log("Status:", res.status);
+
+  const data = await res.json();
+  console.log("Response:", data);
+
+  if (!res.ok) {
+    alert(data.error || "Failed to create poll");
+    return;
+  }
+
+  alert("Poll created successfully");
+}
 
   async function submit() {
     if (!draft.trim()) return;
@@ -188,110 +223,278 @@ export default function QuestionsList({
       : questions;
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        {hydrated
-          ? t.interactive
-          : "Loading..."}
-      </p>
+  <div className="space-y-4">
+    {/* Questions / Polls Toggle */}
+    <div className="flex gap-2 mb-4">
+      <button
+        onClick={() => setView("questions")}
+        className={`rounded-md border px-3 py-1 ${
+          view === "questions"
+            ? "bg-black text-white"
+            : ""
+        }`}
+      >
+        Questions
+      </button>
 
-      <div className="flex gap-2">
+      <button
+        onClick={() => setView("polls")}
+        className={`rounded-md border px-3 py-1 ${
+          view === "polls"
+            ? "bg-black text-white"
+            : ""
+        }`}
+      >
+        Polls
+      </button>
+    </div>
+
+    {/* Polls View */}
+    {view === "polls" && (
+  <div className="space-y-4">
+
+    <input
+      value={pollTitle}
+      onChange={(e) =>
+        setPollTitle(e.target.value)
+      }
+      placeholder="Poll Title"
+      className="w-full rounded-md border px-3 py-2"
+    />
+
+    <input
+      value={pollQuestion}
+      onChange={(e) =>
+        setPollQuestion(e.target.value)
+      }
+      placeholder="Poll Question"
+      className="w-full rounded-md border px-3 py-2"
+    />
+
+    <input
+      value={option1}
+      onChange={(e) =>
+        setOption1(e.target.value)
+      }
+      placeholder="Option 1"
+      className="w-full rounded-md border px-3 py-2"
+    />
+
+    <input
+      value={option2}
+      onChange={(e) =>
+        setOption2(e.target.value)
+      }
+      placeholder="Option 2"
+      className="w-full rounded-md border px-3 py-2"
+    />
+
+      <button
+    onClick={createPoll}
+    className="rounded-md border px-4 py-2"
+  >
+    Create Poll
+  </button>
+
+    {polls.map((poll) => (
+      <div
+        key={poll.id}
+        className="rounded-lg border p-4"
+      >
+        <h3 className="font-bold">
+          {poll.title}
+        </h3>
+
+        <p>{poll.question}</p>
+
+        <div className="mt-2 space-y-2">
+          {poll.poll_options?.map(
+            (option: any) => (
+              <div
+                key={option.id}
+                className="rounded border p-2"
+              >
+                {option.option_text}
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+    {/* Questions View */}
+    {view === "questions" && (
+      <>
+        {/* Language Navigation */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              localStorage.setItem(
+                "language",
+                "en"
+              );
+              setLanguage("en");
+              window.dispatchEvent(
+                new Event("languageChange")
+              );
+            }}
+            className={`rounded-md border px-3 py-1 ${
+              language === "en"
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+            English
+          </button>
+
+          <button
+            onClick={() => {
+              localStorage.setItem(
+                "language",
+                "ta"
+              );
+              setLanguage("ta");
+              window.dispatchEvent(
+                new Event("languageChange")
+              );
+            }}
+            className={`rounded-md border px-3 py-1 ${
+              language === "ta"
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+            தமிழ்
+          </button>
+
+          <button
+            onClick={() => {
+              localStorage.setItem(
+                "language",
+                "hi"
+              );
+              setLanguage("hi");
+              window.dispatchEvent(
+                new Event("languageChange")
+              );
+            }}
+            className={`rounded-md border px-3 py-1 ${
+              language === "hi"
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+            हिन्दी
+          </button>
+        </div>
+
+        <p className="text-sm text-gray-500">
+          {hydrated
+            ? t.interactive
+            : "Loading..."}
+        </p>
+
+        <div className="flex gap-2">
+          <input
+            value={draft}
+            onChange={(e) =>
+              setDraft(e.target.value)
+            }
+            placeholder={t.askQuestion}
+            className="flex-1 rounded-md border px-3 py-2"
+          />
+
+          <button
+            onClick={submit}
+            className="rounded-md border px-4 py-2"
+          >
+            {t.ask}
+          </button>
+        </div>
+
         <input
-          value={draft}
+          value={query}
           onChange={(e) =>
-            setDraft(e.target.value)
+            setQuery(e.target.value)
           }
-          placeholder={t.askQuestion}
-          className="flex-1 rounded-md border px-3 py-2"
+          placeholder={t.search}
+          className="w-full rounded-md border px-3 py-2"
         />
 
-        <button
-          onClick={submit}
-          className="rounded-md border px-4 py-2"
-        >
-          {t.ask}
-        </button>
-      </div>
-
-      <input
-        value={query}
-        onChange={(e) =>
-          setQuery(e.target.value)
-        }
-        placeholder={t.search}
-        className="w-full rounded-md border px-3 py-2"
-      />
-
-      <div className="flex gap-2">
-        <button
-          onClick={() =>
-            setSortBy("latest")
-          }
-          className={`rounded-md border px-3 py-1 ${
-            sortBy === "latest"
-              ? "bg-black text-white"
-              : ""
-          }`}
-        >
-          Latest
-        </button>
-
-        <button
-          onClick={() =>
-            setSortBy("mostVoted")
-          }
-          className={`rounded-md border px-3 py-1 ${
-            sortBy === "mostVoted"
-              ? "bg-black text-white"
-              : ""
-          }`}
-        >
-          Most Voted
-        </button>
-      </div>
-
-      <ul className="space-y-3">
-        {displayedQuestions.map((q) => (
-          <li
-            key={q.id}
-            className="flex items-center gap-3 rounded-lg border p-3"
+        <div className="flex gap-2">
+          <button
+            onClick={() =>
+              setSortBy("latest")
+            }
+            className={`rounded-md border px-3 py-1 ${
+              sortBy === "latest"
+                ? "bg-black text-white"
+                : ""
+            }`}
           >
-            <button
-              onClick={() =>
-                upvote(q.id)
-              }
-              className="rounded-md border px-3 py-1 font-mono"
+            Latest
+          </button>
+
+          <button
+            onClick={() =>
+              setSortBy("mostVoted")
+            }
+            className={`rounded-md border px-3 py-1 ${
+              sortBy === "mostVoted"
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+            Most Voted
+          </button>
+        </div>
+
+        <ul className="space-y-3">
+          {displayedQuestions.map((q) => (
+            <li
+              key={q.id}
+              className="flex items-center gap-3 rounded-lg border p-3"
             >
-              ▲ {q.votes ?? 0}
-            </button>
+              <button
+                onClick={() =>
+                  upvote(q.id)
+                }
+                className="rounded-md border px-3 py-1 font-mono"
+              >
+                ▲ {q.votes ?? 0}
+              </button>
 
-            <span>
-              {language === "ta"
-                ? (q.body_ta ||
+              <span>
+                {language === "ta"
+                  ? q.body_ta ||
                     q.body_en ||
-                    q.body)
-                : language === "hi"
-                ? (q.body_hi ||
+                    q.body
+                  : language === "hi"
+                  ? q.body_hi ||
                     q.body_en ||
-                    q.body)
-                : (q.body_en ||
-                    q.body)}
-            </span>
-          </li>
-        ))}
-      </ul>
+                    q.body
+                  : q.body_en ||
+                    q.body}
+              </span>
+            </li>
+          ))}
+        </ul>
 
-      {hasMore && (
-        <button
-          onClick={loadMore}
-          disabled={loading}
-          className="rounded-md border px-4 py-2 disabled:opacity-50"
-        >
-          {loading
-            ? t.loading
-            : t.loadMore}
-        </button>
-      )}
-    </div>
-  );
+        {hasMore && (
+          <button
+            onClick={loadMore}
+            disabled={loading}
+            className="rounded-md border px-4 py-2 disabled:opacity-50"
+          >
+            {loading
+              ? t.loading
+              : t.loadMore}
+          </button>
+        )}
+      </>
+    )}
+  </div>
+);
 }
