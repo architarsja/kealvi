@@ -25,13 +25,23 @@ interface PollCardProps {
 export default function PollCard({ question, options, language }: PollCardProps) {
   const [selected, setSelected] = useState("");
 
-  async function vote(optionId: string) {
+    async function vote(optionId: string) {
     setSelected(optionId);
 
-    await fetch(`/api/polls/${question.id}`, {
+    const res = await fetch(`/api/polls/${question.id}`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ optionId }),
     });
+
+    if (!res.ok) {
+      console.error("Vote failed");
+      return;
+    }
+
+    window.location.reload();
   }
 
   const totalVotes = options.reduce((sum, op) => sum + op.votes, 0);

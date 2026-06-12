@@ -27,25 +27,20 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { voterId } = await req.json();
-  const pollId = params.id;
+  const { optionId } = await req.json();
 
-  if (!pollId) {
-    return NextResponse.json({ error: "pollId is required" }, { status: 400 });
-  }
+  const { data: option } = await supabase
+    .from("poll_options")
+    .select("votes")
+    .eq("id", optionId)
+    .single();
 
-  const { error } = await supabase
-    .from("polls")
-    .insert([
-      {
-        id: pollId, // or `id: pollId` depending on your schema
-        voter_id: voterId,
-      },
-    ]);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
+  await supabase
+    .from("poll_options")
+    .update({
+      votes: (option?.votes || 0) + 1,
+    })
+    .eq("id", optionId);
 
   return NextResponse.json({ success: true });
 }
